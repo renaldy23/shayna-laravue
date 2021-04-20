@@ -26,22 +26,10 @@
                             <div class="product-pic-zoom">
                                 <img class="product-big-img" :src="defPic" alt="" />
                             </div>
-                            <div class="product-thumbs">
+                            <div class="product-thumbs" v-if="product.galleries.length > 0">
                                 <carousel class="product-thumbs-track ps-slider" :dots="false" :nav="false">
-                                    <div class="pt" @click="changeImg(thumbs[0])" :class="thumbs[0] == defPic ? 'active' : '' ">
-                                        <img src="img/mickey1.jpg" alt="" />
-                                    </div>
-
-                                    <div class="pt" @click="changeImg(thumbs[1])" :class="thumbs[1] == defPic ? 'active' : '' ">
-                                        <img src="img/mickey2.jpg" alt="" />
-                                    </div>
-
-                                    <div class="pt" @click="changeImg(thumbs[2])" :class="thumbs[2] == defPic ? 'active' : '' ">
-                                        <img src="img/mickey3.jpg" alt="" />
-                                    </div>
-
-                                    <div class="pt" @click="changeImg(thumbs[3])" :class="thumbs[3] == defPic ? 'active' : '' ">
-                                        <img src="img/mickey4.jpg" alt="" />
+                                    <div class="pt" @click="changeImg(photos.photo)" :class="photos.photo == defPic ? 'active' : '' " v-for="(photos , index) in product.galleries" :key="index">
+                                        <img :src="photos.photo" alt="" />
                                     </div>
                                 </carousel>
                             </div>
@@ -49,23 +37,17 @@
                         <div class="col-lg-6">
                             <div class="product-details">
                                 <div class="pd-title">
-                                    <span>oranges</span>
-                                    <h3>Pure Pineapple</h3>
+                                    <span>{{ product.type }}</span>
+                                    <h3>{{ product.name }}</h3>
                                 </div>
                                 <div class="pd-desc">
-                                    <p>
-                                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Corporis, error officia. Rem aperiam laborum voluptatum vel, pariatur modi hic provident eum iure natus quos non a sequi, id accusantium! Autem.
-                                    </p>
-                                    <p>
-                                        Lorem ipsum dolor sit, amet consectetur adipisicing elit. Quam possimus quisquam animi, commodi, nihil voluptate nostrum neque architecto illo officiis doloremque et corrupti cupiditate voluptatibus error illum. Commodi expedita animi nulla aspernatur.
-                                        Id asperiores blanditiis, omnis repudiandae iste inventore cum, quam sint molestiae accusamus voluptates ex tempora illum sit perspiciatis. Nostrum dolor tenetur amet, illo natus magni veniam quia sit nihil dolores.
-                                        Commodi ratione distinctio harum voluptatum velit facilis voluptas animi non laudantium, id dolorem atque perferendis enim ducimus? A exercitationem recusandae aliquam quod. Itaque inventore obcaecati, unde quam
-                                        impedit praesentium veritatis quis beatae ea atque perferendis voluptates velit architecto?
-                                    </p>
-                                    <h4>$495.00</h4>
+                                    <p v-html="product.description"></p>
+                                    <h4>${{ product.price }}</h4>
                                 </div>
                                 <div class="quantity">
-                                    <a href="shopping-cart.html" class="primary-btn pd-cart">Add To Cart</a>
+                                    <router-link to="/shopping-cart">
+                                        <a href="#" class="primary-btn pd-cart" @click="addCart(product.id,product.name,product.price,product.galleries[0].photo)">Add To Cart</a>
+                                    </router-link>
                                 </div>
                             </div>
                         </div>
@@ -85,6 +67,7 @@ import HeaderShayna from '../components/HeaderShayna.vue'
 import FooterShayna from '../components/FooterShayna'
 import RelatedProduct from '../components/RelatedProduct'
 import carousel from 'vue-owl-carousel'
+import axios from 'axios'
 
 export default {
   name: 'Product',
@@ -96,19 +79,48 @@ export default {
   },
   data: function(){
     return{
-        defPic: "img/mickey1.jpg",
-        thumbs: [
-            "img/mickey1.jpg",
-            "img/mickey2.jpg",
-            "img/mickey3.jpg",
-            "img/mickey4.jpg"
-        ]
+        defPic: "",
+        idProduct : this.$route.params.id,
+        product: [],
+        keranjangUser: []
     }
   },
   methods : {
       changeImg: function(path){
           this.defPic = path;
+      },
+      setDataImg: function(data){
+          this.product = data;
+          this.defPic = data.galleries[0].photo;
+      },
+      addCart: function(id_product,name,price,photo){
+        var productData = {
+            id_product,
+            name,
+            price,
+            photo
+        }
+        this.keranjangUser.push(productData);
+        const parsed = JSON.stringify(this.keranjangUser)
+        localStorage.setItem("keranjangUser",parsed)
+        window.location.reload();
       }
+  },
+  mounted(){
+        if (localStorage.getItem('keranjangUser')) {
+            try {
+                this.keranjangUser = JSON.parse(localStorage.getItem('keranjangUser'));
+            } catch(e) {
+                localStorage.removeItem('keranjangUser');
+            }
+        }
+      axios.get("http://127.0.0.1:8000/api/products",{
+          params: {
+              id : this.$route.params.id,
+          }
+      })
+      .then(res => (this.setDataImg(res.data.data)))
+      .catch(err => console.log(err))
   }
 }
 </script>
