@@ -77,11 +77,7 @@ export default {
                 localStorage.removeItem('keranjangUser');
             }
         }
-        axios.get("http://127.0.0.1:8000/api/products",{
-            params: {
-                limit: 5
-            }
-        })
+        axios.get("http://127.0.0.1:8000/api/products")
         .then(res => (this.products = res.data.data.data))
         .catch(err => console.log(err))
     }
